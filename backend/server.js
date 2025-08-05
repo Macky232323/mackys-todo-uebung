@@ -1,15 +1,11 @@
-// Import der benötigten Pakete
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 
-// App-Initialisierung
 const app = express();
-app.use(cors()); // CORS für alle Routen aktivieren
-app.use(express.json()); // Ermöglicht das Lesen von JSON im Request Body
+app.use(cors());
+app.use(express.json());
 
-// Datenbankverbindung
-// Die Daten kommen später aus den Umgebungsvariablen von Docker Compose
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -17,20 +13,20 @@ const db = mysql.createConnection({
   database: process.env.DB_DATABASE
 });
 
-// Versuch, die Verbindung zur Datenbank herzustellen
 db.connect(err => {
   if (err) {
     console.error('Fehler bei der Datenbankverbindung: ', err);
     return;
   }
   console.log('Erfolgreich mit der MySQL-Datenbank verbunden.');
-
-  // Erstelle die Tabelle, falls sie nicht existiert
+  
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS todos (
       id INT AUTO_INCREMENT PRIMARY KEY,
       task VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      is_completed BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME DEFAULT NULL
     );
   `;
   db.query(createTableQuery, (err, result) => {
@@ -39,11 +35,8 @@ db.connect(err => {
   });
 });
 
-// === API-Endpunkte ===
-
-// GET /todos - Alle To-Dos abrufen
 app.get('/todos', (req, res) => {
-  db.query('SELECT * FROM todos ORDER BY created_at DESC', (err, results) => {
+  db.query('SELECT * FROM todos ORDER BY is_completed ASC, created_at DESC', (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -51,7 +44,6 @@ app.get('/todos', (req, res) => {
   });
 });
 
-// POST /todos - Ein neues To-Do hinzufügen
 app.post('/todos', (req, res) => {
   const { task } = req.body;
   if (!task) {
@@ -65,7 +57,26 @@ app.post('/todos', (req, res) => {
   });
 });
 
-// DELETE /todos/:id - Ein To-Do löschen
+app.put('/todos/:id', (req, res) => {
+    const { id } = req.params;
+    const query = `
+      UPDATE todos 
+      SET 
+        is_completed = NOT is_completed, 
+        completed_at = IF(is_completed, NULL, NOW())
+      WHERE id = ?
+    `;
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'ToDo nicht gefunden.'});
+        }
+        res.status(200).json({ message: 'ToDo-Status geändert.' });
+    });
+});
+
 app.delete('/todos/:id', (req, res) => {
   const { id } = req.params;
   db.query('DELETE FROM todos WHERE id = ?', [id], (err, result) => {
@@ -75,12 +86,10 @@ app.delete('/todos/:id', (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'ToDo nicht gefunden.'});
     }
-    res.status(204).send(); // 204 No Content - Erfolgreich gelöscht
+    res.status(204).send();
   });
 });
 
-
-// Server starten
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Backend-Server läuft auf Port ${PORT}`);
