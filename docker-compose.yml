@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Der Datenbank-Service
+  db:
+    image: mysql:8.0
+    container_name: mackys-todo-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: mackys_todo
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - mackys-app-net
+
+  # Der Backend-Service
+  backend:
+    build: ./backend
+    container_name: mackys-todo-backend
+    restart: always
+    depends_on:
+      - db # Startet erst, wenn der 'db'-Service gestartet ist
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: 1234
+      DB_DATABASE: mackys_todo
+    networks:
+      - mackys-app-net
+
+  # Der Frontend-Service
+  frontend:
+    build: ./frontend 
+    container_name: mackys-todo-frontend
+    restart: always
+    ports:
+      - "8080:80" # mappen Port 80 des Containers auf Port 8080 unseres Hosts (der VM)
+    depends_on:
+      - backend
+    networks:
+      - mackys-app-net
+
+# Definition der Netzwerke
+networks:
+  mackys-app-net:
+    driver: bridge
+
+# Definition der Volumes
+volumes:
+  db-data: # Das Named Volume für persistente Datenbank-Daten

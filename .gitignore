@@ -1,0 +1,50 @@
+# =========================================
+# Allgemein & Editor-spezifisch
+# =========================================
+
+# Log-Dateien
+*.log
+npm-debug.log*
+
+# Editor-Konfigurationen (besonders für VS Code)
+.vscode/
+
+# Betriebssystem-spezifische Dateien
+.DS_Store
+Thumbs.db
+
+
+# =========================================
+# Backend (Node.js)
+# =========================================
+
+# Der Ordner node_modules enthält alle heruntergeladenen Abhängigkeiten.
+# Er kann riesig werden und sollte nie zu Git hinzugefügt werden.
+# Jeder, der das Projekt klont, kann ihn mit 'npm install' neu erstellen.
+backend/node_modules/
+
+# Umgebungs-Variablen-Dateien
+# Diese enthalten oft sensible Daten wie Datenbank-Passwörter und gehören
+# niemals in ein öffentliches Repository!
+backend/.env
+
+
+# =========================================
+# Frontend
+# =========================================
+
+# Unser aktuelles Frontend hat keine Abhängigkeiten oder Build-Schritte.
+# Würden wir aber ein Framework wie React oder Vue benutzen, würden wir hier
+# ebenfalls den node_modules-Ordner und den Build-Output-Ordner eintragen:
+#
+# frontend/node_modules/
+# frontend/build/
+# frontend/dist/
+
+
+# =========================================
+# Docker & Datenbank
+# =========================================
+
+# Die Datenbank-Daten werden in einem Docker Volume gespeichert, das außerhalb
+# unseres Projekt-Verzeichnisses liegt. Daher müssen wir hier nichts ignorieren.
