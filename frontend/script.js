@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/todos'; // Die URL des Backends
+const API_URL = 'http://172.26.218.48:3000/todos'; // Die URL des Backends
 
 const todoForm = document.getElementById('todo-form');
 const todoInput = document.getElementById('todo-input');
