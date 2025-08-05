@@ -119,7 +119,11 @@ h2 {
     margin-top: 8px;
 }
 
-.timestamp-created {
+#todo-list .timestamp-created {
+    color: #888;
+}
+
+#completed-todo-list .timestamp-created {
     color: #ff6b6b;
 }
 

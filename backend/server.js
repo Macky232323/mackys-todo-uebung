@@ -35,8 +35,10 @@ db.connect(err => {
   });
 });
 
+// KORRIGIERTE, EINFACHERE SORTIERUNG
 app.get('/todos', (req, res) => {
-  db.query('SELECT * FROM todos ORDER BY is_completed ASC, created_at DESC', (err, results) => {
+  const query = 'SELECT * FROM todos ORDER BY is_completed ASC, completed_at ASC, created_at DESC';
+  db.query(query, (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -57,23 +59,32 @@ app.post('/todos', (req, res) => {
   });
 });
 
+// DIE EXPLIZITE, KORREKTE UPDATE-LOGIK BLEIBT
 app.put('/todos/:id', (req, res) => {
     const { id } = req.params;
-    const query = `
-      UPDATE todos 
-      SET 
-        is_completed = NOT is_completed, 
-        completed_at = IF(is_completed, NULL, NOW())
-      WHERE id = ?
-    `;
-    db.query(query, [id], (err, result) => {
+    db.query('SELECT is_completed FROM todos WHERE id = ?', [id], (err, results) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        if (result.affectedRows === 0) {
+        if (results.length === 0) {
             return res.status(404).json({ error: 'ToDo nicht gefunden.'});
         }
-        res.status(200).json({ message: 'ToDo-Status geändert.' });
+
+        const currentStatus = results[0].is_completed;
+        let updateQuery;
+        
+        if (currentStatus) {
+            updateQuery = 'UPDATE todos SET is_completed = FALSE, completed_at = NULL WHERE id = ?';
+        } else {
+            updateQuery = 'UPDATE todos SET is_completed = TRUE, completed_at = NOW() WHERE id = ?';
+        }
+
+        db.query(updateQuery, [id], (updateErr, updateResult) => {
+            if (updateErr) {
+                return res.status(500).json({ error: updateErr.message });
+            }
+            res.status(200).json({ message: 'ToDo-Status geändert.' });
+        });
     });
 });
 

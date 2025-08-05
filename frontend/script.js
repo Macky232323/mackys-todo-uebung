@@ -7,8 +7,14 @@ const completedTodoList = document.getElementById('completed-todo-list');
 const completedHeader = document.getElementById('completed-header');
 
 function formatTimestamp(dateString) {
-    if (!dateString) return '';
+    if (!dateString) {
+        return '';
+    }
     const date = new Date(dateString);
+    // Prüfe, ob das Datum gültig ist, bevor es formatiert wird
+    if (isNaN(date.getTime())) {
+        return '';
+    }
     return date.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
 }
 
@@ -24,48 +30,39 @@ async function fetchTodos() {
 
         todos.forEach(todo => {
             const li = document.createElement('li');
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'todo-content';
-            contentDiv.textContent = todo.task;
             
-            const timestampContainer = document.createElement('div');
-            timestampContainer.className = 'timestamp-container';
-
-            const createdSpan = document.createElement('span');
-            createdSpan.className = 'timestamp-created';
-            createdSpan.textContent = `Erstellt: ${formatTimestamp(todo.created_at)}`;
-            timestampContainer.appendChild(createdSpan);
-            
-            if (todo.is_completed && todo.completed_at) {
-                const completedSpan = document.createElement('span');
-                completedSpan.className = 'timestamp-completed';
-                completedSpan.textContent = `Erledigt: ${formatTimestamp(todo.completed_at)}`;
-                timestampContainer.appendChild(completedSpan);
+            let timestampsHTML = '';
+            if (todo.is_completed) {
+                timestampsHTML = `
+                    <div class="timestamp-container">
+                        <span class="timestamp-created">Erstellt: ${formatTimestamp(todo.created_at)}</span>
+                        <span class="timestamp-completed">Erledigt: ${formatTimestamp(todo.completed_at)}</span>
+                    </div>
+                `;
+                completedCount++;
+            } else {
+                timestampsHTML = `
+                    <div class="timestamp-container">
+                        <span class="timestamp-created">Erstellt: ${formatTimestamp(todo.created_at)}</span>
+                    </div>
+                `;
             }
-            contentDiv.appendChild(timestampContainer);
-            li.appendChild(contentDiv);
 
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'todo-actions';
-
-            const completeButton = document.createElement('button');
-            completeButton.textContent = '✓';
-            completeButton.className = 'complete-btn';
-            completeButton.dataset.id = todo.id;
-            actionsDiv.appendChild(completeButton);
-
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = '×';
-            deleteButton.className = 'delete-btn';
-            deleteButton.dataset.id = todo.id;
-            actionsDiv.appendChild(deleteButton);
+            const todoHTML = `
+                <div class="todo-content">
+                    <div>${todo.task}</div>
+                    ${timestampsHTML}
+                </div>
+                <div class="todo-actions">
+                    <button class="complete-btn" data-id="${todo.id}">✓</button>
+                    <button class="delete-btn" data-id="${todo.id}">×</button>
+                </div>
+            `;
             
-            li.appendChild(actionsDiv);
+            li.innerHTML = todoHTML;
 
             if (todo.is_completed) {
                 completedTodoList.appendChild(li);
-                completedCount++;
             } else {
                 todoList.appendChild(li);
             }
