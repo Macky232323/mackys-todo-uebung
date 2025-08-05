@@ -7,37 +7,45 @@ services:
     container_name: mackys-todo-db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: meinpasswort 
       MYSQL_DATABASE: mackys_todo
     volumes:
       - db-data:/var/lib/mysql
     networks:
       - mackys-app-net
+    # Dieser Block prüft alle paar Sekunden, ob die Datenbank wirklich bereit ist.
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pmeinpasswort"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Der Backend-Service
   backend:
     build: ./backend
     container_name: mackys-todo-backend
     restart: always
+    # Healthcheck ob die db betriebsbereit ist.
     depends_on:
-      - db # Startet erst, wenn der 'db'-Service gestartet ist
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
-      DB_HOST: db
+      DB_HOST: db 
       DB_USER: root
-      DB_PASSWORD: 1234
+      DB_PASSWORD: meinpasswort 
       DB_DATABASE: mackys_todo
     networks:
       - mackys-app-net
 
   # Der Frontend-Service
   frontend:
-    build: ./frontend 
+    build: ./frontend
     container_name: mackys-todo-frontend
     restart: always
     ports:
-      - "8080:80" # mappen Port 80 des Containers auf Port 8080 unseres Hosts (der VM)
+      - "8080:80"
     depends_on:
       - backend
     networks:
@@ -50,4 +58,4 @@ networks:
 
 # Definition der Volumes
 volumes:
-  db-data: # Das Named Volume für persistente Datenbank-Daten
+  db-data:
